@@ -5,6 +5,8 @@ import pprint
 import json
 from random import randint
 from datetime import datetime
+import matplotlib.pyplot as plt
+
 
 
 pd.set_option('display.max_rows', None)
@@ -21,11 +23,11 @@ city_name = "Stockholm" #you can ask for user input instead
 
 
 url = f'https://api.openweathermap.org/data/2.5/weather?q={city_name}&appid={api_key}'
-print(url)
+# print(url)
 r = requests.get(url)
 jason_data = r.json()
-print(type(jason_data))
-print(jason_data)
+# print(type(jason_data))
+# print(jason_data)
 
 
 if r.status_code == 200:  # If connection is successful (200: http ok)
@@ -51,8 +53,31 @@ if r.status_code == 200:  # If connection is successful (200: http ok)
     df["main.temp_min"] = df["main.temp_min"] - 273.15
     df["main.temp_max"] = df["main.temp_max"] - 273.15
     to_day = datetime.now().strftime("%Y_%m_%d_%I_%M_%S_%p")
-    # print("today", to_day)
-    df.to_csv(CURR_DIR_PATH + "/data/" + str(to_day) + "_" + city_name + ".csv", index=False)
-    # df.to_json(CURR_DIR_PATH + "/data/" + city_name + ".json")
     print(df)
+    df2 = df[["date_time", "main.temp", "wind.speed", "main.pressure", "main.humidity"]]
+    print(df2)
+
+    # print("today", to_day)
+    # df2.to_csv(CURR_DIR_PATH + "/data/" + str(to_day) + "_" + city_name + ".csv", index=False)
+    # df2.to_json(CURR_DIR_PATH + "/data/" + str(to_day) + "_" + city_name + ".json")
+    # print(df)
+
+def plot_weather():
+    # reading the database
+    # data = pd.read_csv(CURR_DIR_PATH + "/data/" + "2022_07_12_02_35_48_PM_Stockholm.csv")
+    data = pd.read_json(CURR_DIR_PATH + "/data/" + "2022_07_12_02_35_48_PM_Stockholm.json")
+    print(data)
+    # Bar chart with day against tip
+    plt.bar(data['main.temp_max'], data['main.temp_min'])
+    #
+    plt.title("Bar Chart")
+    #
+    # # Setting the X and Y labels
+    plt.xlabel('Max_temp')
+    plt.ylabel('Min_temp')
+    #
+    # # Adding the legends
+    plt.show()
+
+# plot_weather()
 
