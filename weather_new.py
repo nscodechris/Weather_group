@@ -2,13 +2,14 @@
 import requests, os, configparser
 import pandas as pd
 import matplotlib.pyplot as plt
-import psycopg2
 from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy import text
 from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.operators.bash import BashOperator
+import psycopg2
+
 
 
 pd.set_option('display.max_rows', None)
@@ -93,23 +94,8 @@ def _list_to_pandas():
     # print(df_final)
     df_final.to_csv(CURR_DIR_PATH + "/data/" + "weather.csv", index=False)
     df_final.to_json(CURR_DIR_PATH + "/data/" + "weather.json")
-    return df_final
+    # return df_final
 
-def plot_weather():
-    data = pd.read_json(CURR_DIR_PATH + "/data/" + "2022_07_14_10_07_55_AM_.json")
-    df = pd.read_json(CURR_DIR_PATH + "/data/" + "2022_07_14_10_07_55_AM_.json")
-
-    plt.plot(df["temp"])
-    plt.plot(df["air_pressure"])
-    # plt.plot(days)
-
-    # Adding Title to the Plot
-    plt.title("Scatter Plot")
-
-    # Setting the X and Y labels
-    plt.xlabel('temp')
-    plt.ylabel('air_pressure')
-    plt.show()
 
 def _pandas_to_database():
     df_weather = pd.read_json(CURR_DIR_PATH + "/data/" + "weather.json")
@@ -118,18 +104,18 @@ def _pandas_to_database():
     # weather_group-# CREATE USER weather_user WITH PASSWORD 'weather_123";
 
 with DAG("weather_group_dag", start_date=datetime(2022, 1, 1),
-         schedule_interval=None, catchup=False) as dag:
+         schedule_interval="@daily", catchup=False) as dag:
     get_values = PythonOperator(
         task_id="get_values",
         python_callable=_get_values
     )
 
-    list_to_pandas = BranchPythonOperator(
+    list_to_pandas = PythonOperator(
         task_id="list_to_harmonize",
         python_callable=_list_to_pandas
     )
 
-    pandas_to_database = BranchPythonOperator(
+    pandas_to_database = PythonOperator(
         task_id="pandas_to_database",
         python_callable=_pandas_to_database
     )
@@ -137,9 +123,5 @@ with DAG("weather_group_dag", start_date=datetime(2022, 1, 1),
 
 
 
-_get_values()
-_list_to_pandas()
-_pandas_to_database()
-# plot_weather()
 
 
