@@ -11,7 +11,6 @@ from airflow.operators.bash import BashOperator
 import psycopg2
 
 
-
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
@@ -80,7 +79,17 @@ class WeatherClass:
         recs2 = self.dictr['timeSeries']
         df_time = pd.json_normalize(recs2)
         # create dataframe with only date & time
-        df_final_date = df_time["validTime"]
+        df_time["date"] = pd.to_datetime(df_time['validTime']).dt.strftime('%Y/%m/%d')
+        df_time["hours"] = pd.to_datetime(df_time['validTime']).dt.time
+         # print(df_time)
+        # print(df_day['day'])
+        # df_final_date = pd.merge(df_final_date, df, left_index=True, right_index=True)
+        df_final_date = df_time[["date", "hours"]].copy()
+        # print(df_final_date)
+
+        # print(df_time['validTime'])
+        # print(df_final_date)
+        # print(df_final_date.dtypes)
 
         # print(len(temp_list))
 
@@ -104,7 +113,7 @@ class WeatherClass:
 
 
 smhi = WeatherClass()
-
+# smhi.list_to_pandas()
 
 
 with DAG("weather_group_dag", start_date=datetime(2022, 1, 1),
