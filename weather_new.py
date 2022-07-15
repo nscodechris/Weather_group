@@ -73,15 +73,14 @@ class WeatherClass:
                 self.new_precipitation_list.append(float(item))
         return self.new_temp_list, self.new_air_pressure_list, self.new_precipitation_list
 
+
     def list_to_pandas(self):
         WeatherClass.get_values(self)
-
         # gets the date
         recs2 = self.dictr['timeSeries']
         df_time = pd.json_normalize(recs2)
         # create dataframe with only date & time
         df_final_date = df_time["validTime"]
-
 
         # print(len(temp_list))
 
@@ -92,9 +91,9 @@ class WeatherClass:
         df_final = pd.merge(df_final_date, df, left_index=True, right_index=True)
 
         # print(df_final)
-        # df_final.to_csv(self.CURR_DIR_PATH + "/data/" + "weather.csv", index=False)
-        # df_final.to_json(self.CURR_DIR_PATH + "/data/" + "weather.json")
-        return df_final
+        df_final.to_csv(self.CURR_DIR_PATH + "/data/" + "weather.csv", index=False)
+        df_final.to_json(self.CURR_DIR_PATH + "/data/" + "weather.json")
+        # return df_final
 
 
     def pandas_to_database(self):
@@ -106,9 +105,7 @@ class WeatherClass:
 
 smhi = WeatherClass()
 
-# smhi.get_values()
-# print(smhi.new_temp_list)
-# print(smhi.list_to_pandas())
+
 
 with DAG("weather_group_dag", start_date=datetime(2022, 1, 1),
          schedule_interval="@daily", catchup=False) as dag:
@@ -117,8 +114,8 @@ with DAG("weather_group_dag", start_date=datetime(2022, 1, 1),
         python_callable=smhi.get_values
     )
 
-    smhi.list_to_pandas = BranchPythonOperator(
-        task_id="list_to_harmonize",
+    smhi.list_to_pandas = PythonOperator(
+        task_id="list_to_pandas",
         python_callable=smhi.list_to_pandas
     )
 
@@ -127,7 +124,6 @@ with DAG("weather_group_dag", start_date=datetime(2022, 1, 1),
         python_callable=smhi.pandas_to_database
     )
     smhi.get_values >> smhi.list_to_pandas >> smhi.pandas_to_database
-
 
 
 
