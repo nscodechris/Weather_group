@@ -3,11 +3,13 @@ import requests, os, configparser
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
+from datetime import date
+
 from sqlalchemy import create_engine
 from sqlalchemy import text
-from airflow import DAG
-from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.operators.bash import BashOperator
+# from airflow import DAG
+# from airflow.operators.python import PythonOperator, BranchPythonOperator
+# from airflow.operators.bash import BashOperator
 import psycopg2
 
 
@@ -123,28 +125,64 @@ class WeatherClass:
 smhi = WeatherClass()
 # print(smhi.dictr)
 # smhi.get_values()
+# print(smhi.temp_list)
+
 # smhi.list_to_pandas()
 # smhi.pandas_to_database()
 
 
-with DAG("weather_group_dag", start_date=datetime(2022, 1, 1),
-         schedule_interval="@daily", catchup=False) as dag:
-    smhi.get_values = PythonOperator(
-        task_id="get_values",
-        python_callable=smhi.get_values
-    )
-
-    smhi.list_to_pandas = PythonOperator(
-        task_id="list_to_pandas",
-        python_callable=smhi.list_to_pandas
-    )
-
-    smhi.pandas_to_database = PythonOperator(
-        task_id="pandas_to_database",
-        python_callable=smhi.pandas_to_database
-    )
-    smhi.get_values >> smhi.list_to_pandas >> smhi.pandas_to_database
-
-
+# with DAG("weather_group_dag", start_date=datetime(2022, 1, 1),
+#          schedule_interval="@daily", catchup=False) as dag:
+#     smhi.get_values = PythonOperator(
+#         task_id="get_values",
+#         python_callable=smhi.get_values
+#     )
+#
+#     smhi.list_to_pandas = PythonOperator(
+#         task_id="list_to_pandas",
+#         python_callable=smhi.list_to_pandas
+#     )
+#
+#     smhi.pandas_to_database = PythonOperator(
+#         task_id="pandas_to_database",
+#         python_callable=smhi.pandas_to_database
+#     )
+#     smhi.get_values >> smhi.list_to_pandas >> smhi.pandas_to_database
 
 
+
+def line_chart():
+
+    df = pd.read_json(smhi.CURR_DIR_PATH + "/data/" + "weather.json")
+    # print(df)
+    # reading the database
+    data = pd.read_json(smhi.CURR_DIR_PATH + "/data/" + "weather.json")
+    print(data)
+    # Scatter plot with day against tip
+    collect_date = date(2022, 7, 19)
+    collect_date_tmw = date(2022, 7, 20)
+
+    plot_data = data[data['date'].dt.date == collect_date]
+    plot_data_tmw = data[data['date'].dt.date == collect_date_tmw]
+    # print(plot_data)
+    hours = pd.to_datetime(plot_data["hours"]).dt.strftime('%H')
+    hours_tmw = pd.to_datetime(plot_data_tmw["hours"]).dt.strftime('%H')
+
+    plt.plot(hours, plot_data['temp'], label=collect_date)
+    plt.plot(hours_tmw, plot_data_tmw['temp'], label=collect_date_tmw)
+    plt.legend(loc="upper left")
+
+    # plt.plot(data['precipitation'])
+
+
+
+    # Adding Title to the Plot
+    plt.title("Weather forecast")
+
+    # Setting the X and Y labels
+    plt.xlabel('hours')
+    plt.ylabel('temp')
+
+    plt.show()
+
+line_chart()
